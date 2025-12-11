@@ -4,7 +4,7 @@ Repository for Run 3 HCAL LLP statistical analysis
 
 ## Set up
 
-Instructions and examples can be found in the central [Combine Documentation]([Combin](https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/latest/?h=cmssw_14_1_0_pre4#combine-v10-recommended-version):
+Instructions and examples can be found in the central [Combine Documentation](https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/latest/?h=cmssw_14_1_0_pre4#combine-v10-recommended-version):
 ```
 # Combine v10 -- recommended version
 cmsrel CMSSW_14_1_0_pre4
