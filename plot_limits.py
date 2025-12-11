@@ -1,0 +1,278 @@
+import sys
+import json
+import numpy as np
+import os
+
+import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.gridspec import GridSpec
+
+
+# --- Style settings (CMS-like) ---
+plt.rcParams.update({
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Arial"], #, "Helvetica"],
+    "mathtext.default": "regular",
+    "axes.linewidth": 1.2,
+    "xtick.direction": "in",
+    "ytick.direction": "in",
+    "xtick.minor.visible": True,
+    "ytick.minor.visible": True
+})
+
+# -------------------------------------------------------------------------------------------------
+def get_data(infile):
+
+	data_in = {}
+
+	with open(infile) as f:
+		data_in = json.load(f)
+
+	mask = (np.array( data_in["limits_exp"]["50.0"] ) > 0)
+
+	data_out = {}
+
+	data_out["ctaus"] = np.array( data_in["ctaus"] )[mask] * 1.0e-3
+	data_out["exp_median"] = np.array( data_in["limits_exp"]["50.0"] )[mask] #* 0.01
+	data_out["exp_1s_low"] = np.array( data_in["limits_exp"]["16.0"] )[mask] #* 0.01
+	data_out["exp_1s_high"] = np.array( data_in["limits_exp"]["84.0"] )[mask] #* 0.01
+	data_out["exp_2s_low"] = np.array( data_in["limits_exp"][" 2.5"] )[mask] #* 0.01
+	data_out["exp_2s_high"] = np.array( data_in["limits_exp"]["97.5"] )[mask] #* 0.01
+
+	data_out["nevents_sig_ljdc"] = np.array( data_in["nevents_sig_ljdc"] )[mask] #* 0.01
+	data_out["nevents_sig_sjdc"] = np.array( data_in["nevents_sig_sjdc"] )[mask] #* 0.01
+	data_out["nevents_bkg_ljdc"] = np.full(len(data_out["ctaus"]), data_in["nevents_bkg_ljdc"])
+	data_out["nevents_bkg_sjdc"] = np.full(len(data_out["ctaus"]), data_in["nevents_bkg_sjdc"])
+
+
+	return data_out	
+
+# -------------------------------------------------------------------------------------------------
+def plot_single_limit(infile):
+
+	# Load
+	data = get_data(infile)
+
+	#print(ctaus)
+	#print(exp_median)
+
+	fig, ax = plt.subplots(figsize=(5,5))
+
+	# --- 2σ (yellow) and 1σ (green) bands ---
+	ax.plot(data["ctaus"], data["exp_median"], 'k--', lw=2, label='Expected')
+	ax.fill_between(data["ctaus"], data["exp_2s_low"], data["exp_2s_high"],
+	                color='gold', alpha=0.5, label=r'$\pm2\sigma$')
+	ax.fill_between(data["ctaus"], data["exp_1s_low"], data["exp_1s_high"],
+	                color='limegreen', alpha=0.8, label=r'$\pm1\sigma$')
+
+	# --- Median expected (black dashed) and observed (solid) ---
+	#ax.plot(masses, obs, 'k-', lw=2, label='Observed')
+
+	# --- Axes labels, limits, log scale ---
+	ax.set_xlabel("CTau [m]", fontsize=13)
+	ax.xaxis.label.set_horizontalalignment('right')
+	ax.xaxis.set_label_coords(1.0, ax.xaxis.get_label().get_position()[1]-0.065)
+
+
+	ax.set_ylabel(r"95% CL upper limit on BR(H$\to$SS)", fontsize=13)
+	ax.yaxis.label.set_verticalalignment('top')
+	ax.yaxis.set_label_coords(ax.yaxis.get_label().get_position()[0]-0.12, 0.66)
+
+	ax.set_yscale("log")
+	ax.set_xscale("log")
+	ax.set_ylim(0.0005, 1.0)
+	ax.grid(True, which="both", ls="--", lw=0.5, alpha=0.6)
+
+	# --- CMS label and luminosity text ---
+	#"""
+	ax.text(0.0, 1.0, r"CMS", transform=ax.transAxes,
+	        fontsize=16, fontweight='bold', va='bottom')
+	ax.text(0.13, 1.0, r"Internal", transform=ax.transAxes,
+	        fontsize=14, style='italic', va='bottom')
+	ax.text(1.0, 1.0, r"63 fb$^{-1}$ (2022+2023) (13.6 TeV)", transform=ax.transAxes,
+	        fontsize=12, ha='right', va='bottom')
+	#"""
+
+	# --- Legend ---
+	ax.legend(loc="upper right", frameon=False, fontsize=11)
+
+	plt.tight_layout()
+	plt.subplots_adjust(top=0.92) 
+
+	outfile = os.path.join("plots", infile.replace(".json", ".pdf").split("/")[-1])
+	plt.savefig(outfile)
+
+# -------------------------------------------------------------------------------------------------
+def plot_multi_limit(infiles):
+
+	# Load
+	data = {}
+	filetags = []
+	for infile in infiles:
+		filetag = infile.replace(".json", "").split("/")[-1]
+		filetags.append(filetag)
+		data[filetag] = get_data(infile)
+
+	#print(ctaus)
+	#print(exp_median)
+
+	fig, ax = plt.subplots(figsize=(10,8))
+
+	color_map_name = "summer_r"
+	cmap = get_cmap(color_map_name, len(filetags)) # plasma, viridis
+
+	i = -1
+	for filetag in filetags:
+		i += 1
+
+		if len(data[filetag]["ctaus"]) < 5: continue
+		print(filetag, data[filetag]["exp_median"])
+		continue
+		
+		# --- 2σ (yellow) and 1σ (green) bands ---
+		#ax.fill_between(data["ctaus"], data["exp_2s_low"], data["exp_2s_high"],
+		#                color='gold', alpha=0.5, label=r'$\pm2\sigma$ expected')
+		#ax.fill_between(data["ctaus"], data["exp_1s_low"], data["exp_1s_high"],
+		#                color='limegreen', alpha=0.8, label=r'$\pm1\sigma$ expected')
+
+		# --- Median expected (black dashed) and observed (solid) ---
+		ax.plot(data[filetag]["ctaus"], data[filetag]["exp_median"], color=cmap(i), lw=2, label=filetag)
+		#ax.plot(masses, obs, 'k-', lw=2, label='Observed')
+
+	quit()
+	# --- Axes labels, limits, log scale ---
+	ax.set_xlabel("CTau [m]", fontsize=13)
+	ax.set_ylabel("95% CL upper limit on BR(H->XX * X->bb)", fontsize=13)
+	ax.set_yscale("log")
+	ax.set_xscale("log")
+	#ax.set_ylim(0.0001, 1000.0)
+	ax.grid(True, which="both", ls="--", lw=0.5, alpha=0.6)
+
+	# --- CMS label and luminosity text ---
+	"""
+	ax.text(0.03, 0.95, r"CMS", transform=ax.transAxes,
+	        fontsize=16, fontweight='bold', va='top')
+	ax.text(0.17, 0.95, r"Preliminary", transform=ax.transAxes,
+	        fontsize=13, style='italic', va='top')
+	ax.text(0.97, 0.95, r"XX fb$^{-1}$ (13.6 TeV)", transform=ax.transAxes,
+	        fontsize=11, ha='right', va='top')
+	"""
+
+	# --- Legend ---
+	ax.legend(loc="upper right", frameon=False, fontsize=11)
+
+	plt.tight_layout()
+
+	outfile = os.path.join("plots", "multi.png")
+	plt.savefig(outfile)	
+
+# -------------------------------------------------------------------------------------------------
+def plot_multi_limit_debug(outfiletag, infiles):
+
+	# Load
+	data = {}
+	filetags = []
+	for infile in infiles:
+		filetag = infile.replace(".json", "").split("/")[-1]
+		filetags.append(filetag)
+		data[filetag] = get_data(infile)
+
+	#print(ctaus)
+	#print(exp_median)
+
+	fig = plt.figure(figsize=(10, 8))
+	gs = GridSpec(2, 1, height_ratios=[2, 1], figure=fig, hspace=0.0)  # 2:1 ratio
+
+	ax_top = fig.add_subplot(gs[0])
+	ax_bottom_L = fig.add_subplot(gs[1], sharex=ax_top)
+	ax_bottom_R = ax_bottom_L.twinx()
+
+	color_map_name = "summer_r"
+	cmap = get_cmap(color_map_name, len(filetags)) # plasma, viridis
+
+	i = -1
+	for filetag in filetags:
+		i += 1
+
+		#if len(data[filetag]["ctaus"]) < 5: continue
+
+		
+		# --- 2σ (yellow) and 1σ (green) bands ---
+		#ax.fill_between(data["ctaus"], data["exp_2s_low"], data["exp_2s_high"],
+		#                color='gold', alpha=0.5, label=r'$\pm2\sigma$ expected')
+		#ax.fill_between(data["ctaus"], data["exp_1s_low"], data["exp_1s_high"],
+		#                color='limegreen', alpha=0.8, label=r'$\pm1\sigma$ expected')
+
+		# --- Median expected (black dashed) and observed (solid) ---
+		ax_top.plot(data[filetag]["ctaus"], data[filetag]["exp_median"], color=cmap(i), lw=2, label=filetag)
+
+		if i == 0:
+			ax_bottom_L.plot([],[], color='k', linestyle="-.", lw=2, label='Signal LJDC')
+			ax_bottom_L.plot([],[], color='k', linestyle=":", lw=2, label='Signal SJDC')
+			ax_bottom_L.plot([],[], color='k', linestyle="-", lw=2, label='Background LJDC')
+			ax_bottom_L.plot([],[], color='k', linestyle="--", lw=2, label='Background LJDC')
+
+		ax_bottom_L.plot(data[filetag]["ctaus"], data[filetag]["nevents_sig_ljdc"], color=cmap(i), linestyle="-.", lw=2)# , label='LJDC')
+		ax_bottom_L.plot(data[filetag]["ctaus"], data[filetag]["nevents_sig_sjdc"], color=cmap(i), linestyle=":", lw=2)#, label='SJDC')
+
+		ax_bottom_R.plot(data[filetag]["ctaus"], data[filetag]["nevents_bkg_ljdc"], color=cmap(i), linestyle="-", lw=2)#, label='Data LJDC')
+		ax_bottom_R.plot(data[filetag]["ctaus"], data[filetag]["nevents_bkg_sjdc"], color=cmap(i), linestyle="--", lw=2)#, label='Data SJDC')
+
+		#break
+
+		#ax.plot(masses, obs, 'k-', lw=2, label='Observed')
+
+	# --- Axes labels, limits, log scale ---
+	#ax_top.set_xlabel("CTau [m]", fontsize=13)
+	ax_top.set_ylabel("95% CL upper limit on BR(H->XX * X->bb)", fontsize=13)
+	ax_top.set_yscale("log")
+	ax_top.set_xscale("log")
+	#ax.set_ylim(0.0001, 1000.0)
+	ax_top.grid(True, which="both", ls="--", lw=0.5, alpha=0.6)
+
+	ax_bottom_L.set_xlabel("CTau [m]", fontsize=13)
+	ax_bottom_L.set_ylabel("N Signal Events")
+	ax_bottom_L.set_yscale("log")
+	ax_bottom_R.set_ylabel("N Background Events")
+	ax_bottom_R.set_yscale("log")
+
+	# --- CMS label and luminosity text ---
+	"""
+	ax.text(0.03, 0.95, r"CMS", transform=ax.transAxes,
+	        fontsize=16, fontweight='bold', va='top')
+	ax.text(0.17, 0.95, r"Preliminary", transform=ax.transAxes,
+	        fontsize=13, style='italic', va='top')
+	ax.text(0.97, 0.95, r"XX fb$^{-1}$ (13.6 TeV)", transform=ax.transAxes,
+	        fontsize=11, ha='right', va='top')
+	"""
+
+	# --- Legend ---
+	ax_top.legend(loc="upper right", frameon=False, fontsize=11)
+	ax_bottom_L.legend(loc="upper right", frameon=False, fontsize=11)
+	#ax_bottom_R.legend(loc="center right", frameon=False, fontsize=11)
+
+	plt.tight_layout()
+
+	outfile = os.path.join("plots", outfiletag+".png")
+	print("Saving figure to:", outfile )
+	plt.savefig(outfile)	
+
+# -------------------------------------------------------------------------------------------------
+def main():
+
+	# Read in data
+
+	if len(sys.argv) == 2: 
+		infile = sys.argv[1]
+		plot_single_limit(infile)
+		return
+	else: 
+		filetag = sys.argv[1]
+		infiles = sys.argv[2:]
+		plot_multi_limit_debug(filetag, infiles)
+
+# -------------------------------------------------------------------------------------------------
+if __name__ == '__main__':
+	main()
+

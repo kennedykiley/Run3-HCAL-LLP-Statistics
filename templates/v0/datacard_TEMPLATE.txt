@@ -1,0 +1,14 @@
+imax 2  number of channels
+jmax 1  number of backgrounds
+kmax *  number of nuisance parameters (sources of systematical uncertainties)
+------------
+bin 			LJDC    SJDC 
+observation		3       1
+------------
+bin				LJDC			LJDC			SJDC			SJDC
+process			SIGNAL      	btag			SIGNAL      	btag
+process			0 				1	      		0 				1	
+rate			SIGLJDC		    BKGLJDC			SIGSJDC			BKGSJDC
+------------
+lumi 	lnN		1.11			- 		    	1.11			- 	
+pileup 	lnN		-				1.15	     	1.15		    1.15
