@@ -4,7 +4,9 @@ Repository for Run 3 HCAL LLP statistical analysis
 
 ## Set up
 
-Instructions and examples can be found in the central [Combine Documentation](https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/latest/?h=cmssw_14_1_0_pre4#combine-v10-recommended-version):
+Instructions and examples can be found in the central [Combine Documentation](https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/latest/?h=cmssw_14_1_0_pre4#combine-v10-recommended-version).
+
+First time setup:
 ```
 # Combine v10 -- recommended version
 cmsrel CMSSW_14_1_0_pre4
@@ -20,19 +22,22 @@ cd Run3-HCAL-LLP-Statistics
 git checkout -b <your branch name>
 ```
 
-## Run
-
 On every login:
 ```
 cd CMSSW_14_1_0_pre4/src
 cmsenv
 cd HiggsAnalysis/CombinedLimit/Run3-HCAL-LLP-Statistics
 ```
+
+## Run Combine Wrapper
+
+The script `combine_wrapper.py` takes several inputs, including a template datacard (see `templates/`) and an input signal file. 
+
 List input options in the combine wrapper:
 ```
 python3 combine_wrapper.py -h
 ```
-Run example: this takes an input signal file and runs over multiple ctau target points, which are hardcoded in `combine_wrapper.py`. You must specify a filetag and signal point ctau (it is absolutely critical that the source ctau be correct). Optional arguments are the inclusive and depth score cuts that define the signal region. 
+Example: This takes an input signal file and runs over multiple ctau target points, which are hardcoded in `combine_wrapper.py`. You must specify a filetag and signal point ctau (it is absolutely critical that the source ctau be correct). Optional arguments are the inclusive and depth score cuts that define the signal region. 
 ```
 python3 combine_wrapper.py -t templates/v1/datacard_TEMPLATE.txt -i /eos/cms/store/group/phys_exotica/HCAL_LLP/MiniTuples/v4.1/minituple_HToSSTo4B_125_50_CTau3000_scores.root --filetag HToSSTo4B_125_50 --ctau 3000 --incl-score 0.9 --depth-score 0.8
 ```
