@@ -38,7 +38,7 @@ python3 combine_wrapper.py -t templates/v1/datacard_TEMPLATE.txt -i /eos/cms/sto
 ```
 This also makes .root files that are currently not used.
 
-# Plot Limits
+## Plot Limits
 
 To plot limits, run:
 ```
